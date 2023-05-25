@@ -18,9 +18,10 @@ int main (){
     char nome[200], alfabeto[28] = {' ','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
     scanf("Digite seu nome: %s", &nome);
     for (i = 0; nome[i] != '\0'; i++){
+        printf("%c", nome[i]);
         for(j = 0; j < 28; j++){
             if(nome[i] == alfabeto[j]){
-                total = total + j;
+                total += j;
             }
         }
     }
