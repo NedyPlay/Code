@@ -7,19 +7,26 @@
 
 using namespace std;
 
+//Variável Global
+int var_qntd = 0;
+
+//Estruturas
 struct atributos
 {
 	string label;
 	string traducao;
 };
 
+//Funções - P
 int yylex(void);
 void yyerror(string);
+string genLabel();
+
 %}
 
 %token TK_NUM
 %token TK_MAIN TK_ID TK_TIPO_INT
-%token TK_FIM TK_ERROR
+//%token TK_FIM TK_ERROR
 
 %start S
 
@@ -48,11 +55,13 @@ COMANDO 	: E ';'
 
 E 			: E '+' E
 			{
-				$$.traducao = $1.traducao + $3.traducao + "\ta = b + c;\n";
+				$$.label = genLabel();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " + " + $3.label + ";\n";
 			}
 			| TK_NUM
 			{
-				$$.traducao = "\ta = " + $1.traducao + ";\n";
+				$$.label = genLabel();
+				$$.traducao = "\t" +$$.label + " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
 			;
@@ -61,6 +70,12 @@ E 			: E '+' E
 
 #include "lex.yy.c"
 
+//Funções
+string genLabel ()
+{
+	var_qntd++;
+	return "t" + std::to_string(var_qntd);
+}
 int yyparse();
 
 int main( int argc, char* argv[] )
