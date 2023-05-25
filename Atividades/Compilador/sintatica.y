@@ -47,7 +47,13 @@ BLOCO		: '{' COMANDOS '}'
 			;
 
 COMANDOS	: COMANDO COMANDOS
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
 			|
+			{
+				$$.traducao = "";
+			}
 			;
 
 COMANDO 	: E ';'
@@ -69,25 +75,24 @@ E			: E '+' E
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " * " + $3.label + ";\n";
 			}
 			| E '/' E
-			{
+			{	
 				$$.label = genLabel();
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " / " + $3.label + ";\n";
 			}
-			| TK_NUM
+			| E '=' E
+			{
+				$$.traducao = $1.traducao + $3.traducao +"\t" + $1.label + " = " + $3.label + ";\n";
+			}
+ 			| TK_NUM
 			{
 				$$.label = genLabel();
-				$$.traducao = "\t" +$$.label + " = " + $1.traducao + ";\n";
+				$$.traducao = "\tnum " +$$.label + " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
 			{
 				$$.label = genLabel();
-				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				$$.traducao = "\tid " + $$.label + " = " + $1.label + ";\n";
 			}
-			| TK_ID '=' TK_NUM
-			{
-				$$.label = genLabel();
-				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label; + " = " + $1.label = ";\n";
-			} 
 			;
 
 %%
@@ -98,8 +103,9 @@ E			: E '+' E
 string genLabel ()
 {
 	var_qntd++;
-	return "t" + std::to_string(var_qntd);
+	return "temp" + std::to_string(var_qntd);
 }
+
 int yyparse();
 
 int main( int argc, char* argv[] )
