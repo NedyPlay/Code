@@ -94,7 +94,7 @@ E			: E '+' E
 
 #include "lex.yy.c"
 
-//Funções aaa
+//Funções
 string genLabel ()
 {
 	var_qntd++;
