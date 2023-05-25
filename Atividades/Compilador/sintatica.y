@@ -53,10 +53,25 @@ COMANDOS	: COMANDO COMANDOS
 COMANDO 	: E ';'
 			;
 
-E 			: E '+' E
+E			: E '+' E
 			{
 				$$.label = genLabel();
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " + " + $3.label + ";\n";
+			}
+			| E '-' E
+			{
+				$$.label = genLabel();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " - " + $3.label + ";\n";
+			}
+			| E '*' E
+			{
+				$$.label = genLabel();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " * " + $3.label + ";\n";
+			}
+			| E '/' E
+			{
+				$$.label = genLabel();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " / " + $3.label + ";\n";
 			}
 			| TK_NUM
 			{
@@ -64,6 +79,15 @@ E 			: E '+' E
 				$$.traducao = "\t" +$$.label + " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
+			{
+				$$.label = genLabel();
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+			}
+			| TK_ID '=' TK_NUM
+			{
+				$$.label = genLabel();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label; + " = " + $1.label = ";\n";
+			} 
 			;
 
 %%
