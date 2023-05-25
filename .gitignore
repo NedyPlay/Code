@@ -7,7 +7,7 @@
 *.cmd
 
 #Flex Bison
-glf
-lex.yy.c
-y.tab.c
-y.tab.h
+Atividades/Compilador/glf
+Atividades/Compilador/lex.yy.c
+Atividades/Compilador/y.tab.c
+Atividades/Compilador/y.tab.h
