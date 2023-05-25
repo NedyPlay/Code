@@ -1373,7 +1373,7 @@ yyreturnlab:
 
 #include "lex.yy.c"
 
-//Funções
+//Funções aaa
 string genLabel ()
 {
 	var_qntd++;
