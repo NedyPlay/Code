@@ -21,9 +21,11 @@ struct atributos
 typedef struct {
 	string nomeVariavel;
 	string tipoVariavel;
+	string nomeTemp;
 	//int memoria; Local onde foi salva na pilha
 } TIPO_SIMBOLO;
 
+string functions[20];
 vector<TIPO_SIMBOLO> tabelaSimbolos;
 
 //Funções
@@ -31,14 +33,13 @@ int yylex(void);
 void yyerror(string);
 string genLabel(string tipo);
 string genVar(string tipo, string nome);
-string changeType(string tipo);
 string declarAll(); 
 //string verificaTipos($1.tipo, $3.tipo, operacao); isso aq vai ser mto bom [Thiago]
 
 %}
 
-%token TK_INT TK_FLOAT TK_BOOL TK_CHAR
-%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL
+%token TK_INT TK_FLOAT TK_BOOL TK_CHAR TK_STRING
+%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL TK_TIPO_STRING
 %token TK_FIM TK_ERROR
 
 %start S
@@ -51,7 +52,7 @@ string declarAll();
 
 S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << declarAll() << $5.traducao << "\treturn 0;\n}" << endl; 
+				cout << "/*Compilador Silk*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << declarAll() << $5.traducao << "\treturn 0;\n}" << endl; 
 			}
 			;
 
@@ -70,16 +71,22 @@ COMANDOS	: COMANDO COMANDOS
 				$$.traducao = "";
 			}
 			;
+
 TIPO		: TK_TIPO_BOOL {$$.tipo = "bool";}		| TK_BOOL {$$.tipo = "bool";}
 			| TK_TIPO_CHAR {$$.tipo = "char";} 		| TK_CHAR {$$.tipo = "char";} 	
 			| TK_TIPO_FLOAT {$$.tipo = "float";} 	| TK_FLOAT {$$.tipo = "float";}
 			| TK_TIPO_INT {$$.tipo = "int";} 		| TK_INT {$$.tipo = "int";}
+			| TK_TIPO_STRING {$$.tipo = "string";} 		| TK_STRING {$$.tipo = "string";}
 			;
 COMANDO 	: E ';'
 			;
 
 E			: E '+' E
 			{
+				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
+				{
+					yyerror($1.tipo + " " + $3.tipo);
+				}
 				if($1.tipo == $3.tipo)
 				{
 					$$.label = genLabel($$.tipo);
@@ -101,20 +108,14 @@ E			: E '+' E
 					$$.label = genLabel("float");
 					$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $2.label + " + " + $3.label + ";\n";
 				}
-
-				/*if($1.tipo == $3.tipo)
-				{
-					$$.label = genLabel($$.tipo);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " + " + $3.label + ";\n";
-				}
-				else
-				{
-					//$$.traducao = $1.traducao + $3.traducao + verificaTipos($1.tipo, $3.tipo, operacao);
-				}*/
 			
 			}
 			| E '-' E
 			{
+				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
+				{
+					yyerror($1.tipo + " " + $3.tipo);
+				}
 				if($1.tipo == $3.tipo)
 				{
 					$$.label = genLabel($$.tipo);
@@ -139,6 +140,10 @@ E			: E '+' E
 			}
 			| E '*' E
 			{
+				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
+				{
+					yyerror($1.tipo + " " + $3.tipo);
+				}
 				if($1.tipo == $3.tipo)
 				{
 					$$.label = genLabel($$.tipo);
@@ -163,6 +168,10 @@ E			: E '+' E
 			}
 			| E '/' E
 			{	
+				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
+				{
+					yyerror($1.tipo + " " + $3.tipo);
+				}
 				if($1.tipo == $3.tipo)
 				{
 					$$.label = genLabel($$.tipo);
@@ -187,6 +196,10 @@ E			: E '+' E
 			}
 			| E '^' E
 			{
+				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
+				{
+					yyerror($1.tipo + " " + $3.tipo);
+				}
 				if($1.tipo == $3.tipo)
 				{
 					$$.label = genLabel($$.tipo);
@@ -353,8 +366,9 @@ string genLabel (string tipo)
 	TIPO_SIMBOLO valor;
 	valor.nomeVariavel = temp;
 	valor.tipoVariavel = tipo;
+	valor.nomeTemp = temp;
 	tabelaSimbolos.push_back(valor);
-	return "temp" + std::to_string(var_qntd);
+	return temp;
 }
 
 string genVar (string tipo, string nome)
@@ -365,23 +379,21 @@ string genVar (string tipo, string nome)
 
 	for(int i = 0; i < tabelaSimbolos.size(); i++)
 	{
-		if(tabelaSimbolos[i].nomeVariavel == valor.nomeVariavel && tabelaSimbolos[i].tipoVariavel == valor.tipoVariavel) 
+		if(tabelaSimbolos[i].nomeVariavel == valor.nomeVariavel) 
 		{
-			if(tabelaSimbolos[i].tipoVariavel == valor.tipoVariavel){
-				yyerror(valor.nomeVariavel + " >>> Variavel ja declarada");
-			}
-			var_qntd--;
+			return "";
 		}
 		
 	}
-
+	var_qntd++;
+	valor.nomeTemp = "temp" + std::to_string(var_qntd);
 	tabelaSimbolos.push_back(valor);
 	return "";
 }
 string declarAll() {
 	int i;
 	for (i = 0; i < tabelaSimbolos.size(); i++){
-		cout << "\t" + tabelaSimbolos[i].tipoVariavel + " " + tabelaSimbolos[i].nomeVariavel + ";\n";
+		cout << "\t" + tabelaSimbolos[i].tipoVariavel + " " + tabelaSimbolos[i].nomeTemp + ";\n";
 	}
 	return "";
 }

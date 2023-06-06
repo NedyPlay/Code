@@ -11,6 +11,7 @@ DELIM {ESPACO}+
 INT ({DIGITO}+|"-"{DIGITO}+)
 FLOAT {INT}+("."{INT}+)?
 CHAR \'({LETRA}|{INT})\'
+STRING \'({CHAR}|{DELIM})\'
 BOOL \'(true|false)\'
 ID {LETRA}({LETRA}|{INT})*
 
@@ -31,6 +32,8 @@ ID {LETRA}({LETRA}|{INT})*
 
 "char"		{return TK_TIPO_CHAR;}
 
+"string"    {return TK_TIPO_STRING;}
+
 [(){}[\];,:]	{ return *yytext; }
 
 [+\-*/=^<>]	{ return *yytext; }
@@ -41,6 +44,7 @@ ID {LETRA}({LETRA}|{INT})*
 {FLOAT}     { yylval.label = yytext; return TK_FLOAT; }
 {CHAR}      { yylval.label = yytext; return TK_CHAR; }
 {BOOL}      { yylval.label = yytext; return TK_BOOL; }
+{STRING}      { yylval.label = yytext; return TK_STRING; }
 
 .			{ *yytext; }
 
