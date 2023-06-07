@@ -1,5 +1,5 @@
+
 int main()
 {	
-	1 / 1;
-	
+	a := float b;
 }

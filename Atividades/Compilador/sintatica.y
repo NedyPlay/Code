@@ -32,8 +32,9 @@ vector<TIPO_SIMBOLO> tabelaSimbolos;
 int yylex(void);
 void yyerror(string);
 string genLabel(string tipo);
-string genVar(string tipo, string nome);
+TIPO_SIMBOLO genVar(string tipo, string nome);
 string declarAll(); 
+TIPO_SIMBOLO typeVerify(string tipo1, string tipo2);
 //string verificaTipos($1.tipo, $3.tipo, operacao); isso aq vai ser mto bom [Thiago]
 
 %}
@@ -85,7 +86,7 @@ E			: E '+' E
 			{
 				if(($1.tipo != "int" &&  $1.tipo != "float") || ($3.tipo != "int" &&  $3.tipo != "float"))
 				{
-					yyerror($1.tipo + " " + $3.tipo);
+					
 				}
 				if($1.tipo == $3.tipo)
 				{
@@ -272,30 +273,53 @@ E			: E '+' E
 			}
 			| TIPO TK_ID '=' E
 			{
-				if($1.tipo != $4.tipo){
-					
-				}
-				bool encontrei = false;
 				TIPO_SIMBOLO variavel;
-				for(int i = 0; i < tabelaSimbolos.size(); i++){
-					if(tabelaSimbolos[i].nomeVariavel == $1.label){
+				int find = 0;
+				if($2.tipo != $4.tipo)
+				{
+					cout << "\taoba\n";
+					//variavel = typeVerify($1.tipo, $4.tipo);
+				}
+
+				for(int i = 0; i < tabelaSimbolos.size(); i++)
+				{
+					if(tabelaSimbolos[i].nomeVariavel == $2.label){
 						variavel = tabelaSimbolos[i];
-						encontrei = true;
-						var_qntd--;
+						find = 1;
+					}
+					if(tabelaSimbolos[i].nomeVariavel == $4.label)
+					{
+						TIPO_SIMBOLO variavel2 = tabelaSimbolos[i];
+						$4.label = variavel2.nomeTemp;
+						$4.tipo = variavel2.tipoVariavel;
 					}
 				}
+
+				if(!find)
+				{
+					variavel = genVar($$.tipo, $2.label);
+					$2.label = variavel.nomeTemp;
+					$2.tipo = variavel.tipoVariavel;
+				}
 				
-				$$.tipo = genVar($$.tipo, $2.label);
-				$$.traducao = $4.traducao + "\t" + $$.tipo + "\n" + "\t" + $3.label + " = " + $4.label + ";\n";
+				
+				$$.traducao = $4.traducao + "\t" + $2.label + " = " + $4.label + ";\n";
 			}
 			| TIPO TK_ID
 			{
-				genVar($$.tipo, $2.label);
+				TIPO_SIMBOLO variavel = genVar($$.tipo, $2.label);
+				$$.label = $2.label;
 			}
-			| '-'TIPO
+			| '-'TK_INT
 			{
 				$$.label = genLabel($$.tipo);
-				$$.traducao = "\t" + $$.label + " = " + '-' + $2.traducao + ";\n";
+				if($$.tipo == "int")
+				{
+					$$.traducao = "\t" + $$.label + " = " + $1.traducao + ";\n";
+				}
+				else{
+					$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				}
 			}
 			| TIPO
 			{
@@ -311,9 +335,6 @@ E			: E '+' E
 			}
 			| TK_ID '=' E
 			{
-				if($1.tipo != $3.tipo){
-					
-				}
 				bool encontrei = false;
 				TIPO_SIMBOLO variavel;
 				for(int i = 0; i < tabelaSimbolos.size(); i++)
@@ -323,17 +344,46 @@ E			: E '+' E
 						variavel = tabelaSimbolos[i];
 						encontrei = true;
 					}
+					if(tabelaSimbolos[i].nomeVariavel == $3.label)
+					{
+						TIPO_SIMBOLO variavel2 = tabelaSimbolos[i];
+						$3.label = variavel2.nomeTemp;
+						$3.tipo = variavel2.tipoVariavel;
+					}
 				}
 				if(!encontrei){
 					yyerror($$.label + " >>> Variavel nao declarada");
 				}
-				$1.label = variavel.nomeVariavel;
-				$$.traducao = $1.traducao + $3.traducao +  "\t" + $1.label + " = " + $3.label + ";\n";
+				if($1.tipo != $3.tipo){
+					
+				}
+				$1.label = variavel.nomeTemp;
+				$$.traducao = $1.traducao + $3.traducao +  "\t" + variavel.nomeTemp + " = " + $3.label + ";\n";
 			}
 			| TK_ID ':' '=' E //Go Like
 			{
-				genVar($4.tipo, $2.label);
-				$$.traducao = $4.traducao + "\t" + $2.label + " = " + $4.tipo + ";\n";
+				int encontrei = 1;
+				TIPO_SIMBOLO variavel;
+				for(int i = 0; i < tabelaSimbolos.size(); i++)
+				{
+					if(tabelaSimbolos[i].nomeVariavel == $4.label)
+					{
+						TIPO_SIMBOLO variavel2 = tabelaSimbolos[i];
+						$4.label = variavel2.nomeTemp;
+						$4.tipo = variavel2.tipoVariavel;
+						continue;
+					}
+					if(tabelaSimbolos[i].nomeVariavel == $1.label)
+					{
+						variavel = tabelaSimbolos[i];
+						encontrei = 0;
+					}
+				}
+				if(encontrei)
+				{
+					variavel = genVar($4.tipo, $2.label);
+				}
+				$$.traducao = $4.traducao + "\t" + variavel.nomeTemp + " = " + $4.label + ";\n";
 			}
 			| TK_ID
 			{
@@ -344,12 +394,13 @@ E			: E '+' E
 						variavel = tabelaSimbolos[i];
 						encontrei = true;
 					}
+					
 				}
 				if(!encontrei){
 					yyerror($$.label + " >>> Variavel nao declarada");
-					var_qntd--;
+					
 				}
-				genVar($$.tipo, $1.label);
+				variavel = genVar($$.tipo, $1.label);
 				$$.traducao = "";
 			}
 			;
@@ -371,7 +422,7 @@ string genLabel (string tipo)
 	return temp;
 }
 
-string genVar (string tipo, string nome)
+TIPO_SIMBOLO genVar (string tipo, string nome)
 {
 	TIPO_SIMBOLO valor;
 	valor.nomeVariavel = nome;
@@ -381,21 +432,30 @@ string genVar (string tipo, string nome)
 	{
 		if(tabelaSimbolos[i].nomeVariavel == valor.nomeVariavel) 
 		{
-			return "";
+			return valor;
 		}
 		
 	}
 	var_qntd++;
 	valor.nomeTemp = "temp" + std::to_string(var_qntd);
 	tabelaSimbolos.push_back(valor);
-	return "";
+	cout << "\t/*Variavel declarada:\n\tNome: " + valor.nomeVariavel + "\n\tTipo: " + valor.tipoVariavel + "\n\tTemporaria: " + valor.nomeTemp + "\n\t*/\n";
+	return valor;
 }
-string declarAll() {
+
+string declarAll()
+{
 	int i;
 	for (i = 0; i < tabelaSimbolos.size(); i++){
 		cout << "\t" + tabelaSimbolos[i].tipoVariavel + " " + tabelaSimbolos[i].nomeTemp + ";\n";
 	}
 	return "";
+}
+
+TIPO_SIMBOLO typeVerify(string tipo1, string tipo2)
+{
+	TIPO_SIMBOLO variavel;
+	return variavel;
 }
 int yyparse();
 
